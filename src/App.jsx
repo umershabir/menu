@@ -9,7 +9,11 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* Menu route */}
         <Route path="/menu/:id" element={<MenuPage />} />
+
+        {/* 404 catch-all route */}
+        <Route path="*" element={<div>Page not found</div>} />
       </Routes>
     </Router>
   );
