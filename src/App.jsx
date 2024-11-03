@@ -23,8 +23,8 @@ import { AuthProvider } from "./context/AuthContex";
 import PrivateRoute from "./components/PrivateRoute";
 import PublicRoute from "./components/PublicRoute";
 import MenuPage from "./pages/menu";
-import Login from "./pages/Login";
-import Profile from "./pages/Profile";
+import Login from "./pages/login";
+import Profile from "./pages/profile";
 
 function App() {
   return (
