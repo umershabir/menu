@@ -3,86 +3,81 @@ import { useParams } from "react-router-dom";
 import { Loader2, X, LogIn } from "lucide-react";
 import supabase from "../lib/supabase";
 import NavBar from "../components/Navbar";
+import { useAuth } from "../context/AuthContex";
 
 const MenuPage = () => {
+  // Route params
   const { id } = useParams();
+  const {
+    user,
+    signInWithGoogle,
+    loading: authLoading,
+    isAuthenticated,
+  } = useAuth();
   const [menuData, setMenuData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
-    // Check current session
-    const checkSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      setUser(session?.user || null);
-      setAuthLoading(false);
+    console.log("Auth state in MenuPage:", {
+      isAuthenticated,
+      user,
+      authLoading,
+    });
+  }, [isAuthenticated, user, authLoading]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !id) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchMenu = async () => {
+      try {
+        console.log("Fetching menu for:", id);
+        const { data, error } = await supabase
+          .from("menus")
+          .select(`*, categories (*, items(*))`)
+          .eq("restaurant_id", id)
+          .eq("is_active", true)
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          console.log("Menu data received:", data);
+          setMenuData(data);
+          setSelectedCategory(data.categories[0]?.id);
+        }
+      } catch (error) {
+        console.error("Error fetching menu:", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    checkSession();
-
-    // Subscribe to auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    // Only fetch menu if we have an id and user is authenticated
-    if (id && user) {
-      const fetchMenu = async () => {
-        try {
-          const { data, error } = await supabase
-            .from("menus")
-            .select(`*, categories (*, items(*))`)
-            .eq("restaurant_id", id)
-            .eq("is_active", true);
-
-          if (error) throw error;
-
-          if (data && data.length > 0) {
-            setMenuData(data[0]);
-            setSelectedCategory(data[0].categories[0]?.id);
-          }
-        } catch (error) {
-          console.error("Error:", error);
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      fetchMenu();
-    }
-  }, [id, user]);
+    fetchMenu();
+  }, [id, isAuthenticated]);
 
   const handleSignIn = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: window.location.origin + window.location.pathname,
-        },
-      });
-      if (error) throw error;
+      await signInWithGoogle();
     } catch (error) {
-      console.error("Error signing in:", error.message);
+      console.error("Sign in error:", error);
     }
   };
 
-  // Show auth loading state
+  // Selected category data
+  const selectedCategoryData = menuData?.categories?.find(
+    (cat) => cat.id === selectedCategory
+  );
+
+  // Render loading state while checking auth
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-        <NavBar />
         <div className="text-center flex h-[90vh] flex-col justify-center items-center">
           <Loader2 className="h-12 w-12 animate-spin text-orange-600 mx-auto" />
           <p className="mt-4 text-gray-600 font-medium">Loading...</p>
@@ -91,11 +86,10 @@ const MenuPage = () => {
     );
   }
 
-  // Show sign in screen if user is not authenticated
+  // Render sign in screen if not authenticated
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-        {/* <NavBar /> */}
         <div className="relative overflow-hidden bg-gray-900 text-white min-h-screen">
           <div className="absolute inset-0 bg-gradient-to-r from-orange-900/90 to-red-900/90" />
           <div className="relative flex flex-col items-center justify-center min-h-screen px-4 sm:px-6">
@@ -120,7 +114,7 @@ const MenuPage = () => {
     );
   }
 
-  // Show loading state while fetching menu
+  // Render loading state while fetching menu
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -133,7 +127,7 @@ const MenuPage = () => {
     );
   }
 
-  // Show no menu found state
+  // Render no menu found state
   if (!menuData) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -150,10 +144,6 @@ const MenuPage = () => {
       </div>
     );
   }
-
-  const selectedCategoryData = menuData.categories.find(
-    (cat) => cat.id === selectedCategory
-  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">

@@ -200,8 +200,8 @@ function App() {
           />
 
           {/* Redirects */}
-          <Route path="/" element={<Navigate to="/menu/default" replace />} />
-          <Route path="*" element={<Navigate to="/menu/default" replace />} />
+          <Route path="/" element={<Navigate to="/menu/:id" replace />} />
+          <Route path="*" element={<Navigate to="/menu/:id" replace />} />
         </Routes>
       </AuthProvider>
     </Router>

@@ -16,7 +16,7 @@ const PrivateRoute = ({ children }) => {
   }
 
   if (!user) {
-    return <Navigate to="/menu/default" replace />;
+    return <Navigate to="/menu/:id" replace />;
   }
 
   return children;
