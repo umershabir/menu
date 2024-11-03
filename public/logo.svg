@@ -1,0 +1,61 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <rect x="0" y="0" width="200" height="200" rx="40" fill="#74201c" />
+  
+  <!-- QR Code Frame with Scan Effect -->
+  <g fill="none" stroke="white" stroke-width="4">
+    <g fill="none" stroke="white" stroke-width="6">
+    <path d="M22 50 h30 v-30" stroke-linecap="round" opacity="0.9" />
+    <path d="M150 20 v30 h30" stroke-linecap="round" opacity="0.9" />
+    <path d="M180 150 h-30 v30" stroke-linecap="round" opacity="0.9" />
+    <path d="M50 180 v-30 h-30" stroke-linecap="round" opacity="0.9" />
+  </g>
+    <!-- Corner Frames - All perfectly aligned and symmetrical -->
+    <!-- <path d="M40 50 l25 0 0 25" stroke-linecap="round" />
+    <path d="M135 50 l25 0 l0 25" stroke-linecap="round" />
+    <path d="M160 125 l0 25 l-25 0" stroke-linecap="round" />
+    <path d="M65 150 l-25 0 l0 -25" stroke-linecap="round" /> -->
+    
+    <!-- Scanning Line Animation -->
+    <!-- <line x1="45" y1="100" x2="155" y2="100" stroke="#50E3C2" stroke-width="2">
+      <animate 
+        attributeName="y1" 
+        values="65;135;65" 
+        dur="2s" 
+        repeatCount="indefinite" />
+      <animate 
+        attributeName="y2" 
+        values="65;135;65" 
+        dur="2s" 
+        repeatCount="indefinite" />
+      <animate 
+        attributeName="opacity" 
+        values="0;1;0" 
+        dur="2s" 
+        repeatCount="indefinite" />
+    </line> -->
+  </g>
+  
+  <!-- Simplified Menu Icon -->
+  <g fill="white" transform="translate(85, 75)">
+    <rect x="0" y="0" width="30" height="3" rx="1.5" />
+    <rect x="0" y="8" width="20" height="3" rx="1.5" />
+    <rect x="0" y="16" width="25" height="3" rx="1.5" />
+  </g>
+  
+  <!-- QR Code Points -->
+  <g fill="white">
+    <rect x="75" y="95" width="4" height="4" rx="1" />
+    <rect x="85" y="95" width="4" height="4" rx="1" />
+    <rect x="95" y="95" width="4" height="4" rx="1" />
+    <rect x="115" y="95" width="4" height="4" rx="1" />
+    <rect x="75" y="105" width="4" height="4" rx="1" />
+    <rect x="95" y="105" width="4" height="4" rx="1" />
+    <rect x="105" y="105" width="4" height="4" rx="1" />
+    <rect x="115" y="105" width="4" height="4" rx="1" />
+    <rect x="75" y="115" width="4" height="4" rx="1" />
+    <rect x="85" y="115" width="4" height="4" rx="1" />
+    <rect x="105" y="115" width="4" height="4" rx="1" />
+    <rect x="115" y="115" width="4" height="4" rx="1" />
+  </g>
+</svg>
