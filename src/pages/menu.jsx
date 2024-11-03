@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Loader2, X } from "lucide-react";
+import { Loader2, X, LogIn } from "lucide-react";
 import supabase from "../lib/supabase";
+import NavBar from "../components/Navbar";
 
 const MenuPage = () => {
   const { id } = useParams();
@@ -10,36 +11,121 @@ const MenuPage = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
-    const fetchMenu = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("menus")
-          .select(`*, categories (*, items(*))`)
-          .eq("restaurant_id", id)
-          .eq("is_active", true);
-
-        if (error) throw error;
-
-        if (data && data.length > 0) {
-          setMenuData(data[0]);
-          setSelectedCategory(data[0].categories[0]?.id);
-        }
-      } catch (error) {
-        console.error("Error:", error);
-      } finally {
-        setLoading(false);
-      }
+    // Check current session
+    const checkSession = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      setUser(session?.user || null);
+      setAuthLoading(false);
     };
 
-    fetchMenu();
-  }, [id]);
+    checkSession();
 
+    // Subscribe to auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    // Only fetch menu if we have an id and user is authenticated
+    if (id && user) {
+      const fetchMenu = async () => {
+        try {
+          const { data, error } = await supabase
+            .from("menus")
+            .select(`*, categories (*, items(*))`)
+            .eq("restaurant_id", id)
+            .eq("is_active", true);
+
+          if (error) throw error;
+
+          if (data && data.length > 0) {
+            setMenuData(data[0]);
+            setSelectedCategory(data[0].categories[0]?.id);
+          }
+        } catch (error) {
+          console.error("Error:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchMenu();
+    }
+  }, [id, user]);
+
+  const handleSignIn = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin + window.location.pathname,
+        },
+      });
+      if (error) throw error;
+    } catch (error) {
+      console.error("Error signing in:", error.message);
+    }
+  };
+
+  // Show auth loading state
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+        <NavBar />
+        <div className="text-center flex h-[90vh] flex-col justify-center items-center">
+          <Loader2 className="h-12 w-12 animate-spin text-orange-600 mx-auto" />
+          <p className="mt-4 text-gray-600 font-medium">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show sign in screen if user is not authenticated
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+        {/* <NavBar /> */}
+        <div className="relative overflow-hidden bg-gray-900 text-white min-h-screen">
+          <div className="absolute inset-0 bg-gradient-to-r from-orange-900/90 to-red-900/90" />
+          <div className="relative flex flex-col items-center justify-center min-h-screen px-4 sm:px-6">
+            <div className="text-center max-w-2xl">
+              <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-6">
+                Welcome to Our Menu
+              </h1>
+              <p className="text-xl text-gray-300 mb-12">
+                Sign in to view our delicious menu and explore our offerings
+              </p>
+              <button
+                onClick={handleSignIn}
+                className="inline-flex items-center px-8 py-4 rounded-full bg-white text-gray-900 font-medium text-lg transition-all duration-300 hover:bg-gray-100 hover:shadow-xl transform hover:-translate-y-1"
+              >
+                <LogIn className="w-6 h-6 mr-3" />
+                Sign in with Google
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading state while fetching menu
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="text-center">
+      <div className="min-h-screen bg-gray-50">
+        <NavBar />
+        <div className="text-center flex h-[90vh] flex-col justify-center items-center">
           <Loader2 className="h-12 w-12 animate-spin text-orange-600 mx-auto" />
           <p className="mt-4 text-gray-600 font-medium">Loading menu...</p>
         </div>
@@ -47,16 +133,18 @@ const MenuPage = () => {
     );
   }
 
+  // Show no menu found state
   if (!menuData) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="text-center max-w-md mx-auto px-4">
+      <div className="min-h-screen bg-gray-50">
+        <NavBar />
+        <div className="text-center max-w-md mx-auto px-4 h-[90vh] flex flex-col justify-center items-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
             No Menu Found
           </h2>
           <p className="text-gray-600">
-            {` We couldn't find the menu you're looking for. Please check the URL
-            and try again.`}
+            We couldn't find the menu you're looking for. Please check the URL
+            and try again.
           </p>
         </div>
       </div>
@@ -69,6 +157,7 @@ const MenuPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <NavBar />
       {/* Hero Section */}
       <div className="relative overflow-hidden bg-gray-900 text-white">
         <div className="absolute inset-0 bg-gradient-to-r from-orange-900/90 to-red-900/90" />
@@ -79,7 +168,6 @@ const MenuPage = () => {
           <p className="text-xl text-gray-300">{menuData.description}</p>
         </div>
       </div>
-
       {/* Categories */}
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-lg border-b border-gray-200">
         <div className="max-w-7xl mx-auto">
@@ -105,7 +193,6 @@ const MenuPage = () => {
           </div>
         </div>
       </div>
-
       {/* Category Description */}
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="text-center">
@@ -115,7 +202,6 @@ const MenuPage = () => {
           <p className="text-gray-600">{selectedCategoryData?.description}</p>
         </div>
       </div>
-
       {/* Menu Grid */}
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -160,7 +246,6 @@ const MenuPage = () => {
             ))}
         </div>
       </div>
-
       {/* Custom Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -224,5 +309,4 @@ const MenuPage = () => {
     </div>
   );
 };
-
 export default MenuPage;

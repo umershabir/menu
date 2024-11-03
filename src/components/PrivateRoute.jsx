@@ -1,22 +1,25 @@
-// src/components/PrivateRoute.jsx
+// components/PrivateRoute.js
 import { Navigate } from "react-router-dom";
-// import {use Auth} from "../context/AuthContext";
+// import { useAuth } from "../context/AuthContext";
 import { useAuth } from "../context/AuthContex";
+import { Loader2 } from "lucide-react";
+
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-orange-600" />
       </div>
     );
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/menu/default" replace />;
   }
 
   return children;
 };
+
 export default PrivateRoute;
