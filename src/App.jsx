@@ -172,7 +172,7 @@ import SearchPage from "./pages/search";
 // import MenuPage from "./pages/menu";
 // import Profile from "./pages/profile";
 // import SearchPage from "./pages/search";
-
+import PrivacyPolicy from "./pages/privacy_policy";
 function App() {
   return (
     <Router>
@@ -180,7 +180,7 @@ function App() {
         <Routes>
           {/* Main menu route that handles both authenticated and non-authenticated states */}
           <Route path="/menu/:id" element={<MenuPage />} />
-
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           {/* Protected routes that require authentication */}
           <Route
             path="/search"

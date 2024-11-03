@@ -6,7 +6,6 @@ import NavBar from "../components/Navbar";
 import { useAuth } from "../context/AuthContex";
 
 const MenuPage = () => {
-  // Route params
   const { id } = useParams();
   const {
     user,
@@ -19,15 +18,7 @@ const MenuPage = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  useEffect(() => {
-    console.log("Auth state in MenuPage:", {
-      isAuthenticated,
-      user,
-      authLoading,
-    });
-  }, [isAuthenticated, user, authLoading]);
-
+  console.log(user);
   useEffect(() => {
     if (!isAuthenticated || !id) {
       setLoading(false);
@@ -36,7 +27,6 @@ const MenuPage = () => {
 
     const fetchMenu = async () => {
       try {
-        console.log("Fetching menu for:", id);
         const { data, error } = await supabase
           .from("menus")
           .select(`*, categories (*, items(*))`)
@@ -47,12 +37,11 @@ const MenuPage = () => {
         if (error) throw error;
 
         if (data) {
-          console.log("Menu data received:", data);
           setMenuData(data);
           setSelectedCategory(data.categories[0]?.id);
         }
       } catch (error) {
-        console.error("Error fetching menu:", error);
+        console.error("Menu fetch error:", error);
       } finally {
         setLoading(false);
       }
@@ -61,20 +50,14 @@ const MenuPage = () => {
     fetchMenu();
   }, [id, isAuthenticated]);
 
-  const handleSignIn = async () => {
-    try {
-      await signInWithGoogle();
-    } catch (error) {
-      console.error("Sign in error:", error);
-    }
+  // Sign in handler
+  const handleSignIn = () => {
+    signInWithGoogle().catch((error) => {
+      console.error("Sign in failed:", error);
+    });
   };
 
-  // Selected category data
-  const selectedCategoryData = menuData?.categories?.find(
-    (cat) => cat.id === selectedCategory
-  );
-
-  // Render loading state while checking auth
+  // Auth loading state
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -86,8 +69,8 @@ const MenuPage = () => {
     );
   }
 
-  // Render sign in screen if not authenticated
-  if (!user) {
+  // Sign in screen
+  if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="relative overflow-hidden bg-gray-900 text-white min-h-screen">
@@ -113,7 +96,6 @@ const MenuPage = () => {
       </div>
     );
   }
-
   // Render loading state while fetching menu
   if (loading) {
     return (
