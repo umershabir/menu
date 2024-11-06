@@ -4,9 +4,27 @@ import { Loader2, X, LogIn } from "lucide-react";
 import supabase from "../lib/supabase";
 import NavBar from "../components/Navbar";
 import { useAuth } from "../context/AuthContex";
+import { Link } from "react-router-dom";
+import { Auth } from "@supabase/auth-ui-react";
+import { ThemeSupa } from "@supabase/auth-ui-shared";
 
 const MenuPage = () => {
   const { id } = useParams();
+  const [session, setSession] = useState(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
   const {
     user,
     signInWithGoogle,
@@ -18,7 +36,11 @@ const MenuPage = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  console.log(user);
+
+  // Add this computed value for the selected category data
+  const selectedCategoryData = menuData?.categories?.find(
+    (category) => category.id === selectedCategory
+  );
   useEffect(() => {
     if (!isAuthenticated || !id) {
       setLoading(false);
@@ -91,6 +113,24 @@ const MenuPage = () => {
                 Sign in with Google
               </button>
             </div>
+            <div className="mt-4 text-center text-sm text-white">
+              <p>
+                By signing in, you agree to our{" "}
+                <Link
+                  to="/terms-of-service"
+                  className="font-medium text-white underline"
+                >
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link
+                  to="/privacy-policy"
+                  className="font-medium text-white underline"
+                >
+                  Privacy Policy
+                </Link>
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -140,6 +180,7 @@ const MenuPage = () => {
           <p className="text-xl text-gray-300">{menuData.description}</p>
         </div>
       </div>
+
       {/* Categories */}
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-lg border-b border-gray-200">
         <div className="max-w-7xl mx-auto">
@@ -165,15 +206,19 @@ const MenuPage = () => {
           </div>
         </div>
       </div>
+
       {/* Category Description */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2 capitalize">
-            {selectedCategoryData?.name}
-          </h2>
-          <p className="text-gray-600">{selectedCategoryData?.description}</p>
+      {selectedCategoryData && (
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2 capitalize">
+              {selectedCategoryData.name}
+            </h2>
+            <p className="text-gray-600">{selectedCategoryData.description}</p>
+          </div>
         </div>
-      </div>
+      )}
+
       {/* Menu Grid */}
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -208,7 +253,7 @@ const MenuPage = () => {
                       <h3 className="text-xl font-medium text-gray-900 capitalize">
                         {item.name}
                       </h3>
-                      <span className="text-lg font-bold text-orange-600 ">
+                      <span className="text-lg font-bold text-orange-600">
                         {item.price}
                       </span>
                     </div>
@@ -218,11 +263,11 @@ const MenuPage = () => {
             ))}
         </div>
       </div>
-      {/* Custom Modal */}
-      {isModalOpen && (
+
+      {/* Modal */}
+      {isModalOpen && selectedItem && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            {/* Background overlay */}
             <div
               className="fixed inset-0 transition-opacity"
               onClick={() => setIsModalOpen(false)}
@@ -230,50 +275,45 @@ const MenuPage = () => {
               <div className="absolute inset-0 bg-black opacity-75"></div>
             </div>
 
-            {/* Modal panel */}
             <div className="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full">
-              {selectedItem && (
-                <div>
-                  <div className="relative h-96">
-                    <img
-                      src={selectedItem.image_url}
-                      alt={selectedItem.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-                    <button
-                      onClick={() => setIsModalOpen(false)}
-                      className="absolute top-4 right-4 p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors duration-200"
-                    >
-                      <X className="w-6 h-6 text-white" />
-                    </button>
-                    <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
-                      <h3 className="text-3xl font-bold mb-2 capitalize">
-                        {selectedItem.name}
-                      </h3>
-                      <p className="text-2xl font-semibold text-orange-400">
-                        {selectedItem.price}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="p-6">
-                    <p className="text-gray-600 text-lg leading-relaxed mb-4">
-                      {selectedItem.description}
-                    </p>
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
-                      {selectedItem.is_available ? (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-800">
-                          Available
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full bg-red-100 text-red-800">
-                          Not Available
-                        </span>
-                      )}
-                    </div>
-                  </div>
+              <div className="relative h-96">
+                <img
+                  src={selectedItem.image_url}
+                  alt={selectedItem.name}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="absolute top-4 right-4 p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors duration-200"
+                >
+                  <X className="w-6 h-6 text-white" />
+                </button>
+                <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
+                  <h3 className="text-3xl font-bold mb-2 capitalize">
+                    {selectedItem.name}
+                  </h3>
+                  <p className="text-2xl font-semibold text-orange-400">
+                    {selectedItem.price}
+                  </p>
                 </div>
-              )}
+              </div>
+              <div className="p-6">
+                <p className="text-gray-600 text-lg leading-relaxed mb-4">
+                  {selectedItem.description}
+                </p>
+                <div className="flex items-center gap-4 text-sm text-gray-500">
+                  {selectedItem.is_available ? (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-800">
+                      Available
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full bg-red-100 text-red-800">
+                      Not Available
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -281,4 +321,5 @@ const MenuPage = () => {
     </div>
   );
 };
+
 export default MenuPage;

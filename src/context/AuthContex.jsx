@@ -1,3 +1,4 @@
+// AuthContext.jsx
 import { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import supabase from "../lib/supabase";
@@ -19,9 +20,9 @@ export const AuthProvider = ({ children }) => {
           data: { session },
         } = await supabase.auth.getSession();
         setUser(session?.user ?? null);
-        setLoading(false);
       } catch (error) {
         console.error("Auth initialization error:", error);
+      } finally {
         setLoading(false);
       }
     };
@@ -31,19 +32,12 @@ export const AuthProvider = ({ children }) => {
     // Set up auth state listener
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       setUser(session?.user ?? null);
-      if (event === "SIGNED_IN") {
-        navigate("/menu/default");
-      } else if (event === "SIGNED_OUT") {
-        navigate("/menu/default");
-      }
     });
 
-    return () => {
-      subscription?.unsubscribe();
-    };
-  }, [navigate]);
+    return () => subscription?.unsubscribe();
+  }, []);
 
   const signInWithGoogle = async () => {
     try {
@@ -51,10 +45,8 @@ export const AuthProvider = ({ children }) => {
         provider: "google",
         options: {
           redirectTo: `${window.location.origin}/menu/`,
-          // Remove queryParams that might cause CSP issues
         },
       });
-
       if (error) throw error;
     } catch (error) {
       console.error("Sign in error:", error);
@@ -66,6 +58,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+      navigate("/menu/");
     } catch (error) {
       console.error("Sign out error:", error);
     }
@@ -85,4 +78,5 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
 export default AuthProvider;
